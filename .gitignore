@@ -1,0 +1,11 @@
+/im/__pycache__
+/room/__pycache__
+/room/build
+/room/dist
+/.history
+/im/build
+
+/im/dist/
+/.idea/
+/logs/
+/logs/*
