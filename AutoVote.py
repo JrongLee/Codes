@@ -21,16 +21,17 @@ REQUEST_PARAMS = {
 EDGE_DRIVER_PATH = r"F:\Administrator\Downloads\edgedriver_win32\msedgedriver.exe"
 
 
-def main():
+def main(driver: WebDriver = None):
     try:
-        options = EdgeOptions()
-        options.use_chromium = True
-        options.add_argument("-inprivate")
+        if not driver:
+            options = EdgeOptions()
+            options.use_chromium = True
+            options.add_argument("-inprivate")
 
-        driver = Edge(executable_path=EDGE_DRIVER_PATH, options=options)
-        driver.get(url_encode())
+            driver = Edge(executable_path=EDGE_DRIVER_PATH, options=options)
+            driver.get(url_encode())
 
-        wait = WebDriverWait(driver, 60)
+        wait = WebDriverWait(driver, 30)
         # elem_vote = driver.find_element(By.XPATH, "//a[text()='投票']")
         # elem_vote = wait.until(EC.presence_of_element_located((By.XPATH, r"//a[text()='投票']")))
         # elem_vote.click()
@@ -50,7 +51,11 @@ def main():
     except Exception as e:
         print(e, file=sys.stderr)
     finally:
-        driver.quit()
+        driver.delete_all_cookies()
+        driver.refresh()
+        main(driver)
+
+    driver.quit()
 
 
 def step():
@@ -61,7 +66,12 @@ def step():
         if not no:
             elem = driver.find_element(By.XPATH, "//a[text()='投票']")
             if not elem:
+                elem = driver.find_element(By.XPATH, "//a[text()='今日已投票']")
+                if elem:
+                    driver.delete_all_cookies()
+                    driver.refresh()
                 return None
+
             elem.click()
             elem_container = driver.find_element_by_class_name("modal__container")
             if elem_container.is_displayed():
@@ -94,16 +104,19 @@ def step():
                 "domain": ".businessweekly.com.tw",
                 "size": 40,
             })
-            elem = driver.find_element(By.XPATH, r"//a[text()='確認送出']")
-            if elem and elem.is_enabled():
-                try:
+            elem = None
+            try:
+                elem = driver.find_element(By.XPATH, r"//a[text()='確認送出']")
+                if elem and elem.is_enabled():
                     elem.click()
-                except Exception as e:
-                    if driver.find_element_by_id("gdrp-el"):
-                        driver.execute_script("""document.getElementById("gdrp-el").remove();""")
-
-                    return None
-
+            except Exception as e:
+                if driver.find_element_by_id("gdrp-el"):
+                    driver.execute_script("""document.getElementById("gdrp-el").remove();""")
+            finally:
+                elem_container = driver.find_element_by_class_name("modal__container")
+                if elem_container and elem_container.find_element(By.XPATH, "//img[@alt='投票完成']"):
+                    no += 1
+                    return elem
                 if "投票完成" in driver.page_source:
                     no += 1
                     return elem
