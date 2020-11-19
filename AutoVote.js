@@ -1,13 +1,11 @@
 /*
  * * * * 使用方式 * * *
  * 开始投票:
- *      window.ycApi.start(params);
- *      var params = {
- *         "doctorId" : "医生的 ID",
- *      };
+ *      window.ycApi.start();
  *
  * 停止投票:
  *      window.ycApi.stop();
+ *
  *
  * 查看投票信息:
  *      window.ycApi.statistics();
@@ -73,6 +71,15 @@
             }
             return b;
         },
+        "isEmpty": function (a) {
+            return (a === undefined)
+                || (a === null)
+                || (a === false)
+                || (a === 0)
+                || (typeof a === "string" && a.trim().length === 0)
+                || (a instanceof Array && a.length === 0)
+                || (typeof a === "object" && Object.keys(a).length === 0);
+        },
 
     };
 
@@ -108,6 +115,38 @@
                 },
             });
             return value;
+        },
+        "randomDoctorLog": function (v) {
+            let thiz = this;
+
+            v = (utils.isEmpty(v) ? utils.generateInt(1, 256) : v) & 0xFF;
+            if ((v & 0x0F) === 0) {
+                v = v >> 4;
+            }
+
+            let a = thiz.doctorInfo["questionnaireTopicOptionViewModels"]
+                .map(e => e["QuestionnaireTopicOptionId"])
+                .filter((e, i) => 1 << i & v);
+
+            if (a.length === 0) {
+                return thiz.randomDoctorLog(v >> 4);
+            }
+            return a.join(",");
+        },
+    };
+
+    let clog = {
+        "d": function (v) {
+
+        },
+        "i": function (v) {
+
+        },
+        "w": function (v) {
+
+        },
+        "e": function (v) {
+
         },
     };
 
@@ -165,8 +204,9 @@
             let thiz = this;
             thiz.running = true;
             thiz.currentTrigger = setTimeout(function (reqData) {
-                reqData["IP"] = utils.generateIP();
-                reqData["UUID"] = uuidv4();
+                reqData["IP"] = utils.generateIP();                 // 随机 IP
+                reqData["UUID"] = uuidv4();                         // 随机 UUID
+                reqData["LogValue"] = common.randomDoctorLog();     // 随机 四大指標（如需固定指标请注释该行）
                 jQuery.post(common.API_URL, reqData, function (res) {
                     if (res["ErrorCode"] == 1 || res["ErrorMsg"] == "成功") {
                         thiz.cache["effectiveQuantity"] += 1;
