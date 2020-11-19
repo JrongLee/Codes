@@ -137,16 +137,19 @@
 
     let clog = {
         "d": function (v) {
+            console.log("%cDEBUG%c : " + v, "background-color:#00DDDD;color:white;padding:5px;border-radius:5px;", "");
 
         },
         "i": function (v) {
+            console.log("%cINFO%c : " + v, "background-color:#77FF00;color:white;padding:5px;border-radius:5px;", "");
 
         },
         "w": function (v) {
+            console.log("%cWARN%c : " + v, "background-color:#BBBB00;color:white;padding:5px;border-radius:5px;", "");
 
         },
         "e": function (v) {
-
+            console.log("%cERROR%c : " + v, "background-color:red;color:white;padding:5px;border-radius:5px;", "");
         },
     };
 
@@ -157,25 +160,25 @@
         "cache": {
             "effectiveQuantity": 0,
             "invalidQuantity": 0,
+            "record": [],
         },
         "start": function (config) {
             let thiz = this;
             if (thiz.running) {
-                console.log("%c 程序已经在运行中...", "font-size:18px;font-weight: 400;color:red;");
+                clog.i("The program is running.")
                 return;
             }
             if (!common.doctorInfo || !common.doctorInfo["QuestionnaireTopicId"] || !common.doctorInfo["questionnaireTopicOptionViewModels"]) {
-                console.log("%c 未载入医生信息...", "font-size:18px;font-weight: 400;color:red;");
+                clog.w("Missing doctor information.");
                 return;
             }
             try {
                 uuidv4();
             } catch (e) {
-                console.log("%c 【UUID】模块未载入，请在【5】秒后重试...", "font-size:18px;font-weight: 400;color:red;");
+                clog.w("'UUID' module is loading, please try again in five seconds.");
                 return;
             }
-
-            if (config === undefined || config === null) {
+            if (utils.isEmpty(config)) {
                 config = defaultConfig;
             }
             else {
@@ -263,28 +266,30 @@
 
     win.ycApi = openApi;
 
-    console.info("%c 正在初始化...\n 请等待初始化完成。", "font-weight: 500;font-size: 24px;color: white;padding: 5px;background: #96cde6;border-radius: 10xp;");
+    clog.d("Initializing, please wait to print the doctor information");
     setTimeout(function () {
         let paramsMap = utils.getUrlParamsMap();
         if (paramsMap && paramsMap["doctor"]) {
             common.doctorInfo = common.queryDoctorInfo(paramsMap["doctor"]);
             if (common.doctorInfo) {
                 console.clear();
-                console.log("%c 请确认投票医生信息", "font-size:18px;color:pink;background-color:lightyellow;");
+                clog.i("Please confirm doctor information.");
                 console.table({
-                    "医生名称": common.doctorInfo["TopicName"],
-                    "当前票数": common.doctorInfo["VoteCountSum"],
-                    "投票 ID": common.doctorInfo["QuestionnaireTopicId"],
-                    "查询 ID": common.doctorInfo["RelatedContentId"],
+                    "Doctor Name": common.doctorInfo["TopicName"],
+                    "Real-time votes": common.doctorInfo["VoteCountSum"],
+                    "Voting ID": common.doctorInfo["QuestionnaireTopicId"],
+                    "Query ID": common.doctorInfo["RelatedContentId"],
                 });
                 console.table(common.doctorInfo["questionnaireTopicOptionViewModels"]);
             }
             else {
-                console.log("%c 错误! 获取医生信息失败【" + paramsMap["doctor"] + "】.", "font-size:18px;color:red;");
+                let content = "According to '" + paramsMap["doctor"] + "', no doctor information was obtained";
+                clog.e(content);
             }
         }
         else {
-            console.log("%c 错误! 未获取到医生 Id.", "font-size:18px;color:red;")
+            let content = "The'doctor' field is not obtained in the url\n\t\t\"" + location.search + "\"";
+            clog.e(content);
         }
     }, 1000);
 
